@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import userRoute from "./routes/userRoute.js"
 import diagramGenerator from "./routes/diagram.js";
 import globalErrorHandler from "./controllers/Error/globalErrorhandler.js";
@@ -7,7 +8,13 @@ import CustomError from "./utils/customError.js";
 const app = express();
 
 
-
+//^ CORS configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
 //^middleware for the post body data
 app.use(express.json())
