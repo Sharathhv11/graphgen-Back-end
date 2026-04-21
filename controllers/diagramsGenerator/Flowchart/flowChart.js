@@ -1,49 +1,82 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { GoogleGenAI } from "@google/genai";
 import handleAsync from "./../../../utils/asyncFunctionHandler.js";
 import CustomError from "./../../../utils/customError.js";
-import gemini from "../../../configure/gemini.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const promptPath = path.join(__dirname, "../../../prompts/flowchart.txt");
-const systemPrompt = fs.readFileSync(promptPath, "utf-8");
+// Load both prompts
+const reasoningPromptPath = path.join(__dirname, "../../../prompts/flowchart/FLOWCHART_REASONING.txt");
+const vizPromptPath = path.join(__dirname, "../../../prompts/flowchart/FLOWCHART.txt");
+const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
+const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const flowChartGenerator = handleAsync(async (req, res, next) => {
-  const { body } = req;
-  if (!body.code || !body.code.length) {
+  const { query, apiKey, model, language } = req.body;
+
+  if (!query || !query.length) {
     return next(
-      new CustomError(
-        400,
-        "Please provide the code for generating the flowchart.",
-      ),
+      new CustomError(400, "Please provide the code or description for generating the flowchart.")
     );
   }
 
-  if (body.code.length > 200) {
+  if (query.length > 3000) {
     return next(
-      new CustomError(400, "Code is too big to generate the flowchart"),
+      new CustomError(400, "Input is too big to generate the flowchart")
     );
   }
 
-  const response = await gemini.models.generateContent({
-    model: "gemma-3-27b-it",
+  if (!apiKey) {
+    return next(
+      new CustomError(400, "Please provide a valid Gemini API key.")
+    );
+  }
+
+  const userClient = new GoogleGenAI({ apiKey });
+  const targetModel = model || process.env.FLOWCHART_MODEL_TYPE || "gemma-3-27b-it";
+
+  // Build the input context — prefix with language hint when code mode is used
+  const langHint = language
+    ? `The following is ${language.toUpperCase()} code. Analyze it as source code, NOT a description.\n\n`
+    : "";
+
+  // Stage 1: Reasoning
+  const reasoningResponse = await userClient.models.generateContent({
+    model: targetModel,
     contents: [
       {
         role: "user",
-        parts: [{ text: `${systemPrompt}\n\nHere is the code:\n${body.code}` }],
+        parts: [{ text: `${reasoningPrompt}\n\n${langHint}Here is the input:\n${query}` }],
       },
     ],
   });
 
-  const rawText = response.text.replace(/```json\n?|```\n?/g, "").trim();
-  const flowchartData = JSON.parse(rawText);
+  const reasoningText = reasoningResponse.text;
+
+  // Stage 2: DOT code generation
+  const vizResponse = await userClient.models.generateContent({
+    model: targetModel,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `${vizPrompt}\n\n${reasoningText}` }],
+      },
+    ],
+  });
+
+  const rawVizCode = vizResponse.text
+    .replace(/```(?:dot|graphviz|viz|plain)?\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
 
   res.status(200).json({
     status: "success",
-    data: flowchartData,
+    data: {
+      vizCode: rawVizCode,
+    },
   });
 });
 

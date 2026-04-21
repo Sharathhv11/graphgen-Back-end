@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load both prompts — same two-stage pipeline as DFA
+// Trigger nodemon restart
 const reasoningPromptPath = path.join(__dirname, "../../../prompts/er/ER_REASONING.txt");
 const vizPromptPath = path.join(__dirname, "../../../prompts/er/ER.txt");
 const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
@@ -32,7 +33,7 @@ const erDiagramGenerator = handleAsync(async (req, res, next) => {
   // Per-request Gemini client with the user's API key — same as DFA
   const userClient = new GoogleGenAI({ apiKey });
 
-  const targetModel = model || "gemini-2.5-flash";
+  const targetModel = model || process.env.ER_MODEL_TYPE || "gemma-3-27b-it";
 
   // Stage 1: Reasoning — AI identifies entities, attributes, relationships step-by-step
   const reasoningResponse = await userClient.models.generateContent({

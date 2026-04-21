@@ -2,20 +2,21 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
-import handleAsync from "./../../../utils/asyncFunctionHandler.js";
-import CustomError from "./../../../utils/customError.js";
+import handleAsync from "../../../../utils/asyncFunctionHandler.js";
+import CustomError from "../../../../utils/customError.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load both prompts
-const reasoningPromptPath = path.join(__dirname, "../../../prompts/dfa/DFA_REASONING.txt");
-const vizPromptPath = path.join(__dirname, "../../../prompts/dfa/DFA.txt");
+const reasoningPromptPath = path.join(__dirname, "./../../../../prompts/FINATE-AUTOMATA/dfa/DFA_REASONING.txt");
+const vizPromptPath = path.join(__dirname, "./../../../../prompts/FINATE-AUTOMATA/dfa/DFA.txt");
 const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const dfaDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query:code, apiKey, model } = req.body;
+  const { query:code, apiKey } = req.body;
+  const modelType = process.env.MODEL_TYPE || "gemini-2.5-flash";
 
   if (!code || !code.length) {
     return next(
@@ -34,7 +35,7 @@ const dfaDiagramGenerator = handleAsync(async (req, res, next) => {
 
   // Stage 1: Reasoning — use gemini-2.5-flash to analyze the DFA step-by-step
   const reasoningResponse = await userClient.models.generateContent({
-    model: model || "gemini-2.5-flash",
+    model: modelType,
     contents: [
       {
         role: "user",
@@ -45,10 +46,9 @@ const dfaDiagramGenerator = handleAsync(async (req, res, next) => {
 
   const dfaReasoning = reasoningResponse.text;
 
-  // Stage 2: Viz.js DOT code generation — use user-specified model (default: gemini-2.5-flash)
-  const targetModel = model || "gemini-2.5-flash";
+  // Stage 2: Viz.js DOT code generation
   const vizResponse = await userClient.models.generateContent({
-    model: targetModel,
+    model: modelType,
     contents: [
       {
         role: "user",

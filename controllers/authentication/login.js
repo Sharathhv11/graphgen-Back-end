@@ -18,8 +18,10 @@ const login = handelAsyncFunction(async (req,res,next)=>{
     //^ step 2: verify user exists and verified their email address
     const user = await userModel.findOne({email}).select("+password");
 
+    
+
     if( !user || !user.verified){
-        return next(new CustomError(401,`No user is registered with e-mail ${email}. Please create the account.`))
+         return next(new CustomError(401,`No user is registered with e-mail ${email}. Please create the account.`));
     }
 
     //^ step 3: compare the sent password with the hashed password on the database

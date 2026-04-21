@@ -1,5 +1,5 @@
-import developmentError from "./developmentError.js"
-
+import developmentError from "./developmentError.js";
+import productionError from "./production.js";
 
 const globalErrorHandler = (error, req, res, next) => {
 
@@ -10,11 +10,9 @@ const globalErrorHandler = (error, req, res, next) => {
     //~ sending the different format for application in the prodution and one in development 
     if( process.env.NODE_ENV === "DEV"){
         developmentError(error,res);
-        return;
+    } else {
+        productionError(error,res);
     }
-
-    
 }
-
 
 export default globalErrorHandler;
