@@ -1,100 +1,167 @@
-import nodemailer from "nodemailer";
+import SibApiV3Sdk from "sib-api-v3-sdk";
+import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
-const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io",
-  port: 587,
-  auth: {
-    user: process.env.MAILTRAP_USER,
-    pass: process.env.MAILTRAP_PASS,
-  },
-});
+dotenv.config();
 
-const LOGO_URL = "https://img.icons8.com/wired/128/000000/mind-map.png";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// ✅ Verification Email
-const mail = async (name, link, toEmail) => {
+// Dynamic Branding Icons
+const LOGO_URL = "https://img.icons8.com/wired/128/000000/mind-map.png"; // Professional placeholder graph icon
+
+// Configure Brevo client
+const client = SibApiV3Sdk.ApiClient.instance;
+const apiKey = client.authentications["api-key"];
+apiKey.apiKey = process.env.BREVO_API_KEY;
+
+const transactionalEmailApi = new SibApiV3Sdk.TransactionalEmailsApi();
+
+// Sender configuration from environment variables
+const SENDER = {
+  email: process.env.BREVO_SENDER_EMAIL || "batman11login@gmail.com",
+  name: process.env.BREVO_SENDER_NAME || "GraphGen Support",
+};
+
+/**
+ * Send Email Verification Mail (Onboarding)
+ */
+async function mail(name, link, toEmail) {
   try {
-    console.log("Sending email to:", toEmail);
-
-    const info = await transporter.sendMail({
-      from: `"GraphGen" <test@mailtrap.io>`,
-      to: toEmail,
-      subject: "Verify Your Email",
-      html: `
+    await transactionalEmailApi.sendTransacEmail({
+      sender: SENDER,
+      to: [{ email: toEmail }],
+      subject: "Welcome to GraphGen! Verify Your Email",
+      textContent: `Hello ${name}, Welcome to GraphGen! Please verify your email: ${link}`,
+      htmlContent: `
 <!DOCTYPE html>
 <html>
-<body style="font-family: Arial; background:#f8fafc; padding:20px;">
-  <div style="max-width:600px;margin:auto;background:white;border-radius:10px;padding:20px;">
-    
-    <div style="text-align:center;">
-      <img src="${LOGO_URL}" width="100"/>
-      <h2>Welcome to GraphGen, ${name}!</h2>
-    </div>
-
-    <p>Click below to verify your email:</p>
-
-    <div style="text-align:center;margin:20px;">
-      <a href="${link}" 
-         style="background:black;color:white;padding:12px 20px;border-radius:6px;text-decoration:none;">
-         Verify Email
-      </a>
-    </div>
-
-    <p>If you didn’t sign up, ignore this email.</p>
-
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Your Email</title>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f8fafc; padding-bottom: 40px; }
+    .main { background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-spacing: 0; color: #1e293b; border-radius: 12px; overflow: hidden; margin-top: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .header { padding: 40px 0; text-align: center; background-color: #ffffff; }
+    .logo { width: 180px; height: auto; }
+    .content { padding: 0 40px 40px 40px; text-align: left; line-height: 1.6; }
+    .title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 24px; text-align: center; }
+    .text { font-size: 16px; color: #475569; margin-bottom: 32px; }
+    .button-container { text-align: center; margin-bottom: 32px; }
+    .button { background-color: #000000; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; transition: background-color 0.2s; }
+    .footer { padding: 32px 40px; background-color: #f1f5f9; text-align: center; font-size: 14px; color: #64748b; }
+    .footer a { color: #000000; text-decoration: none; font-weight: 500; }
+    @media screen and (max-width: 600px) { .main { margin-top: 0; border-radius: 0; } .content { padding: 0 20px 40px 20px; } }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main">
+      <tr>
+        <td class="header">
+          <img src="${LOGO_URL}" alt="GraphGen" class="logo">
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <h1 class="title">Welcome to GraphGen, ${name}!</h1>
+          <p class="text">We're thrilled to have you join our community of intelligent visualizers. To get started and secure your account, please verify your email address by clicking the button below.</p>
+          <div class="button-container">
+            <a href="${link}" class="button">Verify Email Address</a>
+          </div>
+          <p class="text">If you didn't create an account with GraphGen, you can safely ignore this email.</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="footer">
+          <p>&copy; 2024 GraphGen. All rights reserved.</p>
+          <p><a href="https://graphgen.com">Visit our website</a> &bull; <a href="mailto:support@graphgen.com">Support</a></p>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>
       `,
     });
-
-    console.log("Verification email sent:", info.messageId);
   } catch (error) {
-    console.error("Mailtrap error:", error);
+    console.error("Brevo verification email failed:", error);
+    return error;
   }
-};
+}
 
-// ✅ Forgot Password Email
-const mailForgotPassword = async (name, link, toEmail) => {
+/**
+ * Send Forgot Password Mail
+ */
+async function mailForgotPassword(name, link, toEmail) {
   try {
-    const info = await transporter.sendMail({
-      from: `"GraphGen" <test@mailtrap.io>`,
-      to: toEmail,
-      subject: "Reset Password",
-      html: `
+    await transactionalEmailApi.sendTransacEmail({
+      sender: SENDER,
+      to: [{ email: toEmail }],
+      subject: "Reset Your Password - GraphGen",
+      textContent: `Hello ${name}, Reset your password: ${link}`,
+      htmlContent: `
 <!DOCTYPE html>
 <html>
-<body style="font-family: Arial; background:#f8fafc; padding:20px;">
-  <div style="max-width:600px;margin:auto;background:white;border-radius:10px;padding:20px;">
-    
-    <div style="text-align:center;">
-      <img src="${LOGO_URL}" width="100"/>
-      <h2>Password Reset</h2>
-    </div>
-
-    <p>Hello ${name},</p>
-    <p>Click below to reset your password:</p>
-
-    <div style="text-align:center;margin:20px;">
-      <a href="${link}" 
-         style="background:#007bff;color:white;padding:12px 20px;border-radius:6px;text-decoration:none;">
-         Reset Password
-      </a>
-    </div>
-
-    <p>This link expires in 10 minutes.</p>
-
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reset Your Password</title>
+  <style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background-color: #f8fafc; margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+    .wrapper { width: 100%; table-layout: fixed; background-color: #f8fafc; padding-bottom: 40px; }
+    .main { background-color: #ffffff; margin: 0 auto; width: 100%; max-width: 600px; border-spacing: 0; color: #1e293b; border-radius: 12px; overflow: hidden; margin-top: 40px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .header { padding: 40px 0; text-align: center; background-color: #ffffff; }
+    .logo { width: 180px; height: auto; }
+    .content { padding: 0 40px 40px 40px; text-align: left; line-height: 1.6; }
+    .title { font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 24px; text-align: center; }
+    .text { font-size: 16px; color: #475569; margin-bottom: 32px; }
+    .button-container { text-align: center; margin-bottom: 32px; }
+    .button { background-color: #007bff; color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; display: inline-block; transition: background-color 0.2s; }
+    .footer { padding: 32px 40px; background-color: #f1f5f9; text-align: center; font-size: 14px; color: #64748b; }
+    .footer a { color: #000000; text-decoration: none; font-weight: 500; }
+    @media screen and (max-width: 600px) { .main { margin-top: 0; border-radius: 0; } .content { padding: 0 20px 40px 20px; } }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <table class="main">
+      <tr>
+        <td class="header">
+          <img src="${LOGO_URL}" alt="GraphGen" class="logo">
+        </td>
+      </tr>
+      <tr>
+        <td class="content">
+          <h1 class="title">Password Reset Request</h1>
+          <p class="text">Hello <strong>${name}</strong>,<br><br>We received a request to reset the password for your GraphGen account. If you made this request, please click the button below to set a new password. This link will expire in 10 minutes.</p>
+          <div class="button-container">
+            <a href="${link}" class="button">Reset Password</a>
+          </div>
+          <p class="text">If you didn't request a password reset, you can safely ignore this email.</p>
+        </td>
+      </tr>
+      <tr>
+        <td class="footer">
+          <p>&copy; 2024 GraphGen. All rights reserved.</p>
+          <p><a href="https://graphgen.com">Visit our website</a> &bull; <a href="mailto:support@graphgen.com">Support</a></p>
+        </td>
+      </tr>
+    </table>
   </div>
 </body>
 </html>
       `,
     });
-
-    console.log("Reset email sent:", info.messageId);
   } catch (error) {
-    console.error("Mailtrap error:", error);
+    console.error("Brevo forgot-password email failed:", error);
+    return error;
   }
-};
+}
 
 export default mail;
 export { mailForgotPassword };

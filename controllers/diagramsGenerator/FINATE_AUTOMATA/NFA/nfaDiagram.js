@@ -1,0 +1,75 @@
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { GoogleGenAI } from "@google/genai";
+import handleAsync from "../../../../utils/asyncFunctionHandler.js";
+import CustomError from "../../../../utils/customError.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load both prompts
+const reasoningPromptPath = path.join(__dirname, "./../../../../prompts/nfa/NFA_REASONING.txt");
+const vizPromptPath = path.join(__dirname, "./../../../../prompts/nfa/NFA.txt");
+const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
+const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
+
+const nfaDiagramGenerator = handleAsync(async (req, res, next) => {
+  const { query: code, apiKey } = req.body;
+  const modelType = process.env.MODEL_TYPE || "gemini-2.5-flash";
+  // const modelType = "gemma-3-27b-it" || "gemini-2.5-flash";
+
+  if (!code || !code.length) { 
+    return next(
+      new CustomError(400, "Please provide the description for generating the NFA diagram.")
+    );
+  }
+
+  if (!apiKey) {
+    return next(
+      new CustomError(400, "Please provide a valid Gemini API key.")
+    );
+  }
+
+  // Create a per-request Gemini client with the user's API key
+  const userClient = new GoogleGenAI({ apiKey });
+
+  // Stage 1: Reasoning — use gemini-2.5-flash to analyze the NFA step-by-step
+  const reasoningResponse = await userClient.models.generateContent({
+    model: modelType,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `${reasoningPrompt}\n\nDesign an NFA for:\n${code}` }],
+      },
+    ],
+  });
+
+  const nfaReasoning = reasoningResponse.text;
+
+  // Stage 2: Viz.js DOT code generation
+  const vizResponse = await userClient.models.generateContent({
+    model: modelType,
+    contents: [
+      {
+        role: "user",
+        parts: [{ text: `${vizPrompt}\n\n${nfaReasoning}` }],
+      },
+    ],
+  });
+
+  // Clean the response — strip any markdown code fences if present
+  const rawVizCode = vizResponse.text
+    .replace(/```(?:dot|graphviz|viz|plain)?\n?/g, "")
+    .replace(/```\n?/g, "")
+    .trim();
+
+  res.status(200).json({
+    status: "success",
+    data: {
+      vizCode: rawVizCode,
+    },
+  });
+});
+
+export default nfaDiagramGenerator;
