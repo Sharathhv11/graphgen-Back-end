@@ -5,6 +5,7 @@ import dfaDiagramGenerator from "../controllers/diagramsGenerator/FINATE_AUTOMAT
 import nfaDiagramGenerator from "../controllers/diagramsGenerator/FINATE_AUTOMATA/NFA/nfaDiagram.js";
 import erDiagramGenerator from "../controllers/diagramsGenerator/ER/erDiagram.js";
 import dsDiagramGenerator from "../controllers/diagramsGenerator/DataStructure/dsDiagram.js";
+import umlDiagramGenerator from "../controllers/diagramsGenerator/UML/umlDiagram.js";
 
 const diagramGenerator = Router();
 
@@ -14,6 +15,7 @@ diagramGenerator.post("/toc/dfa",authorization, dfaDiagramGenerator)
 diagramGenerator.post("/toc/nfa",authorization, nfaDiagramGenerator)
 diagramGenerator.post("/toc/er",authorization, erDiagramGenerator)
 diagramGenerator.post("/ds",authorization, dsDiagramGenerator)
+diagramGenerator.post("/uml",authorization, umlDiagramGenerator)
 
 
 export default diagramGenerator;
