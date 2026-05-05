@@ -15,7 +15,7 @@ const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const dsDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query: code, apiKey } = req.body;
+  const { query: code } = req.body;
   const modelType =  process.env.FLOWCHART_MODEL_TYPE || "gemma-3-27b-it";
 
   if (!code || !code.length) {
@@ -24,13 +24,15 @@ const dsDiagramGenerator = handleAsync(async (req, res, next) => {
     );
   }
 
+  const apiKey = process.env.GEMINI_API;
+
   if (!apiKey) {
     return next(
-      new CustomError(400, "Please provide a valid Gemini API key.")
+      new CustomError(500, "Server configuration error: Gemini API key is missing.")
     );
   }
 
-  // Create a per-request Gemini client with the user's API key
+  // Create a per-request Gemini client with the server's API key
   const userClient = new GoogleGenAI({ apiKey });
 
   // Stage 1: Reasoning — analyze the data structure step-by-step

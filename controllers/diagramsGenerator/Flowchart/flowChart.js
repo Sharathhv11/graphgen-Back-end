@@ -15,7 +15,7 @@ const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const flowChartGenerator = handleAsync(async (req, res, next) => {
-  const { query, apiKey, model, language } = req.body;
+  const { query, model, language } = req.body;
 
   if (!query || !query.length) {
     return next(
@@ -29,9 +29,11 @@ const flowChartGenerator = handleAsync(async (req, res, next) => {
     );
   }
 
+  const apiKey = process.env.GEMINI_API;
+
   if (!apiKey) {
     return next(
-      new CustomError(400, "Please provide a valid Gemini API key.")
+      new CustomError(500, "Server configuration error: Gemini API key is missing.")
     );
   }
 
