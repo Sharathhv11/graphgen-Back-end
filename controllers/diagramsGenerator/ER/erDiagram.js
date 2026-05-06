@@ -35,7 +35,7 @@ const erDiagramGenerator = handleAsync(async (req, res, next) => {
   // Per-request Gemini client with the server's API key — same as DFA
   const userClient = new GoogleGenAI({ apiKey });
 
-  const targetModel = model || process.env.ER_MODEL_TYPE || "gemma-3-27b-it";
+  const targetModel = model || process.env.ER_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   // Stage 1: Reasoning — AI identifies entities, attributes, relationships step-by-step
   const reasoningResponse = await userClient.models.generateContent({

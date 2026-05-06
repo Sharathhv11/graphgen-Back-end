@@ -15,8 +15,8 @@ const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const dsDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query: code } = req.body;
-  const modelType =  process.env.FLOWCHART_MODEL_TYPE || "gemma-3-27b-it";
+  const { query: code, model } = req.body;
+  const modelType = model || process.env.DS_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   if (!code || !code.length) {
     return next(

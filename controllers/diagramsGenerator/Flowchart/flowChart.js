@@ -38,7 +38,7 @@ const flowChartGenerator = handleAsync(async (req, res, next) => {
   }
 
   const userClient = new GoogleGenAI({ apiKey });
-  const targetModel = model || process.env.FLOWCHART_MODEL_TYPE || "gemma-3-27b-it";
+  const targetModel = model || process.env.FLOWCHART_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   // Build the input context — prefix with language hint when code mode is used
   const langHint = language

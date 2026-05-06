@@ -15,8 +15,8 @@ const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const dfaDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query:code } = req.body;
-  const modelType = process.env.MODEL_TYPE || "gemini-2.5-flash";
+  const { query: code, model } = req.body;
+  const modelType = model || process.env.DFA_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   if (!code || !code.length) {
     return next(
@@ -30,7 +30,7 @@ const dfaDiagramGenerator = handleAsync(async (req, res, next) => {
     return next(
       new CustomError(500, "Server configuration error: Gemini API key is missing.")
     );
-  } 
+  }
 
   // Create a per-request Gemini client with the server's API key
   const userClient = new GoogleGenAI({ apiKey });

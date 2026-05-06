@@ -15,9 +15,8 @@ const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
 
 const nfaDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query: code } = req.body;
-  const modelType = process.env.MODEL_TYPE || "gemini-2.5-flash";
-  // const modelType = "gemma-3-27b-it" || "gemini-2.5-flash";
+  const { query: code, model } = req.body;
+  const modelType = model || process.env.NFA_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   if (!code || !code.length) { 
     return next(

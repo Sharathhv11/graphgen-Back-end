@@ -34,7 +34,7 @@ const umlDiagramGenerator = handleAsync(async (req, res, next) => {
   // Per-request Gemini client with the server's API key
   const userClient = new GoogleGenAI({ apiKey });
 
-  const targetModel = model || process.env.UML_MODEL_TYPE || "gemma-3-27b-it";
+  const targetModel = model || process.env.UML_MODEL_TYPE || "gemini-2.5-flash-lite";
 
   // Stage 1: Reasoning — AI determines UML type and extracts entities/relationships
   const reasoningResponse = await userClient.models.generateContent({
