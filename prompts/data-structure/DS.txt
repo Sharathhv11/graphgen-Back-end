@@ -19,27 +19,27 @@ NODE STYLES BY STRUCTURE TYPE:
 
 For TREES (BST, AVL, Heap, Trie):
 - Regular nodes: `shape=circle`, `style=filled`, `fillcolor="#e3f2fd"`, `color="#1976d2"`, `fontname="Arial"`, `fontsize="14"`, `width="0.65"`, `fixedsize="true"`
-- Root node: same as regular but `fillcolor="#bbdefb"`, `color="#0d47a1"`, `penwidth="2"`
+- Root node: same as regular but `fillcolor="#bbdefb"`, `color="#1976d2"`, `penwidth="2"`
 - NULL/leaf pointers: `shape=point`, `width="0.1"`, `color="#bdbdbd"`
 - Edges: solid arrows, `color="#424242"`
 - Left edges: `label="L"` (optional, only if requested)
 - Right edges: `label="R"` (optional, only if requested)
 
 For LINKED LISTS:
-- Nodes: `shape=record`, `style=filled`, `fillcolor="#e8f5e9"`, `color="#388e3c"`, `fontname="Arial"`, `fontsize="12"`
+- Nodes: `shape=record`, `style=filled`, `fillcolor="#e3f2fd"`, `color="#1976d2"`, `fontname="Arial"`, `fontsize="12"`
 - Record format: `label="<data> value | <next> ●"` for singly-linked
 - Record format: `label="<prev> ● | <data> value | <next> ●"` for doubly-linked
 - Head marker: add a label node `Head` with `shape=plaintext`, arrow to first node
 - NULL node: `shape=plaintext`, `label="NULL"`, `fontcolor="#9e9e9e"`
-- Edges: `color="#388e3c"`
+- Edges: `color="#1976d2"`
 
 For STACKS:
-- Nodes: `shape=record`, `style=filled`, `fillcolor="#fff3e0"`, `color="#e65100"`, `fontname="Arial"`, `fontsize="13"`
+- Nodes: `shape=record`, `style=filled`, `fillcolor="#e3f2fd"`, `color="#1976d2"`, `fontname="Arial"`, `fontsize="13"`
 - Stack grows top-to-bottom; TOP marker with `shape=plaintext`
 - Use `rank=same` to enforce vertical stacking
 
 For QUEUES:
-- Nodes: `shape=record`, `style=filled`, `fillcolor="#f3e5f5"`, `color="#7b1fa2"`, `fontname="Arial"`, `fontsize="13"`
+- Nodes: `shape=record`, `style=filled`, `fillcolor="#e3f2fd"`, `color="#1976d2"`, `fontname="Arial"`, `fontsize="13"`
 - FRONT and REAR markers with `shape=plaintext`
 - Left-to-right layout
 
@@ -51,7 +51,7 @@ For GRAPHS:
 - Use `digraph` always (for undirected, use `dir=none` on edges)
 
 For ARRAYS / HASH TABLES:
-- Use a single record node: `shape=record`, `style=filled`, `fillcolor="#e0f7fa"`, `color="#00838f"`
+- Use a single record node: `shape=record`, `style=filled`, `fillcolor="#e3f2fd"`, `color="#1976d2"`
 - Array: `label="{ idx0: val0 | idx1: val1 | ... }"`
 - Hash Table: show buckets as record nodes with chains as linked nodes
 
@@ -84,10 +84,10 @@ digraph BST {
 digraph LinkedList {
     rankdir=LR;
     bgcolor="transparent";
-    node [fontname="Arial", fontsize=12, shape=record, style=filled, fillcolor="#e8f5e9", color="#388e3c"];
-    edge [fontname="Arial", fontsize=11, color="#388e3c"];
+    node [fontname="Arial", fontsize=12, shape=record, style=filled, fillcolor="#e3f2fd", color="#1976d2"];
+    edge [fontname="Arial", fontsize=11, color="#1976d2"];
 
-    head [shape=plaintext, label="Head", fontcolor="#1b5e20"];
+    head [shape=plaintext, label="Head", fontcolor="#1976d2"];
     n1 [label="<data> 10 | <next> ●"];
     n2 [label="<data> 20 | <next> ●"];
     n3 [label="<data> 30 | <next> ●"];

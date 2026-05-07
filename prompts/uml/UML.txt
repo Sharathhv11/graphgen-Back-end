@@ -26,14 +26,14 @@ DIAGRAM TYPE → DOT MAPPING RULES
   • Aggregation: `edge [arrowhead=odiamond]`
 - Add edge labels for relationship names and cardinality where applicable.
 - Use `rankdir=TB` for class diagrams.
-- Use colors: class header in `#1565C0` (blue) for main classes, `#2E7D32` (green) for interfaces.
+- Use colors: main classes in `#e3f2fd` (light blue) with `#1976d2` border, interfaces in `#d4edda` (light green) with `#28a745` border.
 
 REFERENCE — Class Diagram:
 digraph G {
     bgcolor="transparent";
     fontname="Arial";
     rankdir=TB;
-    node [shape=record, fontname="Arial", fontsize=11, style=filled, fillcolor="#f0f4ff", color="#1565C0"];
+    node [shape=record, fontname="Arial", fontsize=11, style=filled, fillcolor="#e3f2fd", color="#1976d2"];
     edge [fontname="Arial", fontsize=9, color="#555555"];
 
     User [label="{User|userId : int\lname : String\lemail : String\l|login()\llogout()\l}"];
@@ -48,27 +48,27 @@ digraph G {
 - Use `rank=same` to align participants on the same row.
 - Draw edges with numbered step labels: `[label="1: message"]`.
 - Use different colors for request (forward) and response (backward) edges.
-- Forward messages: `color="#1565C0"`
-- Response messages: `color="#2E7D32", style=dashed`
+- Forward messages: `color="#1976d2"`
+- Response messages: `color="#28a745", style=dashed`
 
 REFERENCE — Sequence Diagram:
 digraph G {
     bgcolor="transparent";
     fontname="Arial";
     rankdir=LR;
-    node [shape=box, fontname="Arial", fontsize=11, style="filled,rounded", fillcolor="#f0f4ff", color="#1565C0"];
+    node [shape=box, fontname="Arial", fontsize=11, style="filled,rounded", fillcolor="#e3f2fd", color="#1976d2"];
     edge [fontname="Arial", fontsize=9];
 
-    User -> Frontend [label="1: enter credentials", color="#1565C0"];
-    Frontend -> Backend [label="2: login request", color="#1565C0"];
-    Backend -> Database [label="3: verify user", color="#1565C0"];
-    Database -> Backend [label="4: result", color="#2E7D32", style=dashed];
-    Backend -> Frontend [label="5: response", color="#2E7D32", style=dashed];
+    User -> Frontend [label="1: enter credentials", color="#1976d2"];
+    Frontend -> Backend [label="2: login request", color="#1976d2"];
+    Backend -> Database [label="3: verify user", color="#1976d2"];
+    Database -> Backend [label="4: result", color="#28a745", style=dashed];
+    Backend -> Frontend [label="5: response", color="#28a745", style=dashed];
 }
 
 ── USE CASE DIAGRAM ──
 - Actors: `shape=plaintext` with the actor name as label.
-- Use cases: `shape=ellipse, style=filled, fillcolor="#e8f0fe", color="#1565C0"`.
+- Use cases: `shape=ellipse, style=filled, fillcolor="#e3f2fd", color="#1976d2"`.
 - System boundary: Use a `subgraph cluster_system` with a label and border.
 - Relationships:
   • Actor to use case: solid arrow `arrowhead=none`
@@ -94,7 +94,7 @@ digraph G {
         fontname="Arial";
         fontsize=12;
 
-        node [shape=ellipse, style=filled, fillcolor="#e8f0fe", color="#1565C0", fontname="Arial", fontsize=10];
+        node [shape=ellipse, style=filled, fillcolor="#e3f2fd", color="#1976d2", fontname="Arial", fontsize=10];
         "Borrow Book";
         "Return Book";
         "Search Catalog";
@@ -106,10 +106,10 @@ digraph G {
 }
 
 ── ACTIVITY DIAGRAM ──
-- Start node: `shape=circle, style=filled, fillcolor="#1565C0", label="", width=0.3`
-- End node: `shape=doublecircle, style=filled, fillcolor="#1565C0", label="", width=0.3`
-- Activity nodes: `shape=box, style="filled,rounded", fillcolor="#f0f4ff", color="#1565C0"`
-- Decision nodes: `shape=diamond, style=filled, fillcolor="#fff3e0", color="#E65100", label="condition?"`
+- Start node: `shape=circle, style=filled, fillcolor="#1976d2", label="", width=0.3`
+- End node: `shape=doublecircle, style=filled, fillcolor="#1976d2", label="", width=0.3`
+- Activity nodes: `shape=box, style="filled,rounded", fillcolor="#e3f2fd", color="#1976d2"`
+- Decision nodes: `shape=diamond, style=filled, fillcolor="#fff9c4", color="#fbc02d", label="condition?"`
 - Use `rankdir=TB` (top to bottom flow).
 - Label decision edges with conditions: `[label="Yes"]`, `[label="No"]`.
 
@@ -121,15 +121,15 @@ digraph G {
     node [fontname="Arial", fontsize=11];
     edge [fontname="Arial", fontsize=9, color="#555555"];
 
-    Start [shape=circle, style=filled, fillcolor="#1565C0", label="", width=0.3];
-    End [shape=doublecircle, style=filled, fillcolor="#1565C0", label="", width=0.3];
+    Start [shape=circle, style=filled, fillcolor="#1976d2", label="", width=0.3];
+    End [shape=doublecircle, style=filled, fillcolor="#1976d2", label="", width=0.3];
 
-    node [shape=box, style="filled,rounded", fillcolor="#f0f4ff", color="#1565C0"];
+    node [shape=box, style="filled,rounded", fillcolor="#e3f2fd", color="#1976d2"];
     "Receive Order";
     "Process Payment";
     "Ship Order";
 
-    node [shape=diamond, style=filled, fillcolor="#fff3e0", color="#E65100"];
+    node [shape=diamond, style=filled, fillcolor="#fff9c4", color="#fbc02d"];
     "Payment OK?";
 
     Start -> "Receive Order";
@@ -141,9 +141,9 @@ digraph G {
 }
 
 ── STATE DIAGRAM ──
-- States: `shape=box, style="filled,rounded", fillcolor="#f0f4ff", color="#1565C0"`
-- Initial state: `shape=circle, style=filled, fillcolor="#1565C0", label="", width=0.3`
-- Final state: `shape=doublecircle, style=filled, fillcolor="#1565C0", label="", width=0.3`
+- States: `shape=box, style="filled,rounded", fillcolor="#e3f2fd", color="#1976d2"`
+- Initial state: `shape=circle, style=filled, fillcolor="#1976d2", label="", width=0.3`
+- Final state: `shape=doublecircle, style=filled, fillcolor="#1976d2", label="", width=0.3`
 - Transitions: labeled edges with event/trigger names.
 - Use `rankdir=LR` for horizontal flow.
 
@@ -155,10 +155,10 @@ digraph G {
     node [fontname="Arial", fontsize=11];
     edge [fontname="Arial", fontsize=9, color="#555555"];
 
-    Start [shape=circle, style=filled, fillcolor="#1565C0", label="", width=0.3];
-    End [shape=doublecircle, style=filled, fillcolor="#1565C0", label="", width=0.3];
+    Start [shape=circle, style=filled, fillcolor="#1976d2", label="", width=0.3];
+    End [shape=doublecircle, style=filled, fillcolor="#1976d2", label="", width=0.3];
 
-    node [shape=box, style="filled,rounded", fillcolor="#f0f4ff", color="#1565C0"];
+    node [shape=box, style="filled,rounded", fillcolor="#e3f2fd", color="#1976d2"];
     Created;
     Paid;
     Shipped;

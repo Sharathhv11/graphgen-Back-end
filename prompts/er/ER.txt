@@ -28,7 +28,7 @@ RELATIONSHIP EDGES:
 
 LAYOUT & STYLE:
 - Graph: `rankdir=LR`, `bgcolor="transparent"`, `fontname="Arial"`, `splines=true`, `overlap=false`, `nodesep=0.5`, `ranksep=1.5`
-- Table Header Colors: Use `#1565C0` (blue) for primary tables, `#2E7D32` (green) for association/transaction tables, `#D84315` (orange) for lookup tables, etc.
+- Table Header Colors: Use `#e3f2fd` (light blue) with `#1976d2` text for primary tables, `#d4edda` (light green) with `#28a745` text for association/transaction tables, `#ffcccc` (light red) with `#d32f2f` text for lookup tables, etc.
 - Edges: `color="#555555"`, `fontname="Arial"`, `fontsize=10`
 
 REFERENCE EXAMPLE — E-commerce Schema:
@@ -45,7 +45,7 @@ digraph ER {
 
     Customers [label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-      <tr><td bgcolor="#1565C0"><font color="white"><b>Customers</b></font></td></tr>
+      <tr><td bgcolor="#e3f2fd"><font color="#1976d2"><b>Customers</b></font></td></tr>
       <tr><td port="id" align="left">customer_id (PK)</td></tr>
       <tr><td align="left">name</td></tr>
       <tr><td align="left">email</td></tr>
@@ -53,7 +53,7 @@ digraph ER {
 
     Orders [label=<
     <table border="0" cellborder="1" cellspacing="0" cellpadding="4">
-      <tr><td bgcolor="#2E7D32"><font color="white"><b>Orders</b></font></td></tr>
+      <tr><td bgcolor="#d4edda"><font color="#28a745"><b>Orders</b></font></td></tr>
       <tr><td port="order_id" align="left">order_id (PK)</td></tr>
       <tr><td port="customer_id" align="left">customer_id (FK)</td></tr>
       <tr><td align="left">order_date</td></tr>
