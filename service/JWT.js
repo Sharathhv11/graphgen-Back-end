@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 
 export const getJWT = (data) => {
     const token = jwt.sign(data, process.env.SECRECT_CODE,{ 
-        expiresIn: "1h"
+        expiresIn: "15d"
     });
 
     return token;
