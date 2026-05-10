@@ -42,8 +42,13 @@ const login = handelAsyncFunction(async (req,res,next)=>{
     //^ in response send the status code and jwt for the user
     res.status(200).send({
         status:"success",
-        message:`login to account ${user.username} is successfully.`,
-        token:JWT
+        message:`login to account ${user.name} is successfully.`,
+        token:JWT,
+        user: {
+            name: user.name,
+            email: user.email,
+            profileImage: user.profileImage || null,
+        }
     });
 
 })

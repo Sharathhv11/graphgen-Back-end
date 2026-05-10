@@ -28,10 +28,32 @@ const userScheme = mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      // Required only for "local" (email/password) users — Google users don't set a password
+      required: function () {
+        return this.authProvider === "local";
+      },
       select: false,
       minlength: 8,
       maxlength: 100,
+    },
+
+    // ── Authentication provider ──
+    authProvider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+
+    // Google OAuth fields
+    googleId: {
+      type: String,
+      default: null,
+      sparse: true, // Allows null but enforces uniqueness on non-null values
+    },
+
+    profileImage: {
+      type: String,
+      default: null,
     },
 
     verified: {
@@ -52,6 +74,13 @@ const userScheme = mongoose.Schema(
     passwordChangedAt: {
       type: Date,
       default: null,
+    },
+
+    // Encrypted Gemini API key (AES-256-GCM components)
+    geminiApiKey: {
+      iv:      { type: String, default: null },
+      content: { type: String, default: null },
+      tag:     { type: String, default: null },
     },
   },
   { timestamps: true }

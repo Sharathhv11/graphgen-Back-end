@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { GoogleGenAI } from "@google/genai";
 import handleAsync from "./../../../utils/asyncFunctionHandler.js";
 import CustomError from "./../../../utils/customError.js";
+import { getUserApiKey } from "./../../../utils/getUserApiKey.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,15 +25,11 @@ const erDiagramGenerator = handleAsync(async (req, res, next) => {
     );
   }
 
-  const apiKey = process.env.GEMINI_API;
+  // Get user's decrypted API key (falls back to env if not configured)
+  const apiKey = await getUserApiKey(req.user._id, next);
+  if (!apiKey) return;
 
-  if (!apiKey) {
-    return next(
-      new CustomError(500, "Server configuration error: Gemini API key is missing.")
-    );
-  }
-
-  // Per-request Gemini client with the server's API key — same as DFA
+  // Per-request Gemini client with the user's API key
   const userClient = new GoogleGenAI({ apiKey });
 
   const targetModel = model || process.env.ER_MODEL_TYPE || "gemini-2.5-flash-lite";
