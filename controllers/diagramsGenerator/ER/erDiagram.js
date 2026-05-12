@@ -9,15 +9,66 @@ import { getUserApiKey } from "./../../../utils/getUserApiKey.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load both prompts — same two-stage pipeline as DFA
-// Trigger nodemon restart
+const stripMarkdownFences = (text = "") =>
+  text
+    .replace(/```(?:dot|graphviz|viz|plain|json|sql|text)?\n?/gi, "")
+    .replace(/```\n?/g, "")
+    .trim();
+
+const normalizeSqlDialect = (dialect = "") => {
+  const normalized = String(dialect).trim().toLowerCase();
+
+  if (normalized === "postgres" || normalized === "postgresql") return "PostgreSQL";
+  if (normalized === "sqlserver" || normalized === "sql server" || normalized === "mssql") {
+    return "SQL Server";
+  }
+
+  return "MySQL";
+};
+
+const sanitizeSqlQueriesOutput = (text = "") => {
+  const cleaned = stripMarkdownFences(text);
+  let parsed;
+
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
+    if (!arrayMatch) {
+      throw new CustomError(502, "Failed to generate SQL queries as a JSON array.");
+    }
+    parsed = JSON.parse(arrayMatch[0]);
+  }
+
+  if (!Array.isArray(parsed) || !parsed.length) {
+    throw new CustomError(502, "Failed to generate SQL CREATE TABLE statements.");
+  }
+
+  const sqlQueries = parsed
+    .map((query) => (typeof query === "string" ? query.trim() : ""))
+    .filter(Boolean)
+    .map((query) => (query.endsWith(";") ? query : `${query};`));
+
+  if (
+    !sqlQueries.length ||
+    sqlQueries.some((query) => !/^CREATE\s+TABLE\b/i.test(query))
+  ) {
+    throw new CustomError(502, "Generated SQL output is invalid. Please try again.");
+  }
+
+  return sqlQueries;
+};
+
+// Load prompts
 const reasoningPromptPath = path.join(__dirname, "../../../prompts/er/ER_REASONING.txt");
 const vizPromptPath = path.join(__dirname, "../../../prompts/er/ER.txt");
+const sqlPromptPath = path.join(__dirname, "../../../prompts/er/ER_SQL.txt");
 const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
+const sqlPrompt = fs.readFileSync(sqlPromptPath, "utf-8");
 
 const erDiagramGenerator = handleAsync(async (req, res, next) => {
-  const { query, model } = req.body;
+  const { query, model, sqlDialect } = req.body;
 
   if (!query || !query.length) {
     return next(
@@ -58,16 +109,31 @@ const erDiagramGenerator = handleAsync(async (req, res, next) => {
     ],
   });
 
-  // Strip any markdown fences the model might accidentally add — same as DFA
-  const rawVizCode = vizResponse.text
-    .replace(/```(?:dot|graphviz|viz|plain)?\n?/g, "")
-    .replace(/```\n?/g, "")
-    .trim();
+  const rawVizCode = stripMarkdownFences(vizResponse.text);
+
+  // Stage 3: SQL generation — convert ER reasoning into executable CREATE TABLE statements
+  const targetDialect = normalizeSqlDialect(sqlDialect);
+  const sqlResponse = await userClient.models.generateContent({
+    model: targetModel,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          {
+            text: `${sqlPrompt}\n\nSQL Dialect: ${targetDialect}\n\n${erReasoning}`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const sqlQueries = sanitizeSqlQueriesOutput(sqlResponse.text);
 
   res.status(200).json({
     status: "success",
     data: {
       vizCode: rawVizCode,
+      sqlQueries,
     },
   });
 });
