@@ -1,0 +1,27 @@
+You are an expert database designer and SQL engineer.
+Task: Convert the ER analysis below into SQL CREATE TABLE statements.
+
+STRICT RULES:
+1. Return ONLY a valid JSON array of SQL strings.
+2. Each array item must be one complete executable `CREATE TABLE ...;` statement.
+3. End every SQL statement with a semicolon.
+4. Do not return markdown, explanations, or extra keys.
+5. Respect the provided SQL dialect. If not specified, use MySQL syntax.
+
+REQUIREMENTS:
+- Extract every entity as a table.
+- Include all attributes with suitable SQL data types (INT, BIGINT, VARCHAR, TEXT, BOOLEAN, DATE, TIMESTAMP, DECIMAL, etc.).
+- Identify and define primary keys.
+- Add `AUTO_INCREMENT` (or dialect equivalent) when appropriate for surrogate keys.
+- Add NOT NULL, UNIQUE, DEFAULT, CHECK, and other constraints when implied.
+- Identify all relationships and add correct foreign key constraints.
+- For one-to-many, place FK on the many-side table.
+- For many-to-many, create a junction table with foreign keys to both parent tables.
+- Handle self-referencing relationships (e.g., manager_id -> employees.id) correctly.
+- Keep naming consistent and SQL syntax valid.
+
+OUTPUT FORMAT (MANDATORY):
+[
+  "CREATE TABLE ...;",
+  "CREATE TABLE ...;"
+]
