@@ -26,46 +26,79 @@ const normalizeSqlDialect = (dialect = "") => {
   return "MySQL";
 };
 
-const sanitizeSqlQueriesOutput = (text = "") => {
+/**
+ * Parses the combined JSON output from the merged ER prompt.
+ * Expected format: { "dotCode": "digraph ...", "sqlQueries": ["CREATE TABLE ...;", ...] }
+ * Falls back to extracting DOT code and SQL separately if JSON parsing fails.
+ */
+const parseCombinedOutput = (text = "") => {
   const cleaned = stripMarkdownFences(text);
-  let parsed;
 
+  // Try parsing as JSON first (expected path)
   try {
-    parsed = JSON.parse(cleaned);
-  } catch {
-    const arrayMatch = cleaned.match(/\[[\s\S]*\]/);
-    if (!arrayMatch) {
-      throw new CustomError(502, "Failed to generate SQL queries as a JSON array.");
+    const parsed = JSON.parse(cleaned);
+    if (parsed && typeof parsed.dotCode === "string" && Array.isArray(parsed.sqlQueries)) {
+      return {
+        dotCode: parsed.dotCode.trim(),
+        sqlQueries: parsed.sqlQueries
+          .filter((q) => typeof q === "string" && q.trim())
+          .map((q) => (q.trim().endsWith(";") ? q.trim() : `${q.trim()};`)),
+      };
     }
-    parsed = JSON.parse(arrayMatch[0]);
+  } catch {
+    // JSON parsing failed — try fallback extraction
   }
 
-  if (!Array.isArray(parsed) || !parsed.length) {
-    throw new CustomError(502, "Failed to generate SQL CREATE TABLE statements.");
+  // Fallback: try to find JSON object in the text
+  const jsonMatch = cleaned.match(/\{[\s\S]*"dotCode"[\s\S]*"sqlQueries"[\s\S]*\}/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (parsed && typeof parsed.dotCode === "string" && Array.isArray(parsed.sqlQueries)) {
+        return {
+          dotCode: parsed.dotCode.trim(),
+          sqlQueries: parsed.sqlQueries
+            .filter((q) => typeof q === "string" && q.trim())
+            .map((q) => (q.trim().endsWith(";") ? q.trim() : `${q.trim()};`)),
+        };
+      }
+    } catch {
+      // Continue to next fallback
+    }
   }
 
-  const sqlQueries = parsed
-    .map((query) => (typeof query === "string" ? query.trim() : ""))
-    .filter(Boolean)
-    .map((query) => (query.endsWith(";") ? query : `${query};`));
+  // Last resort: extract DOT code and SQL array separately
+  const dotMatch = cleaned.match(/(?:strict\s+)?digraph\s+[\s\S]*?\{[\s\S]*\}/i);
+  const sqlArrayMatch = cleaned.match(/\[[\s\S]*?("CREATE\s+TABLE[\s\S]*?)?\]/i);
 
-  if (
-    !sqlQueries.length ||
-    sqlQueries.some((query) => !/^CREATE\s+TABLE\b/i.test(query))
-  ) {
-    throw new CustomError(502, "Generated SQL output is invalid. Please try again.");
+  const dotCode = dotMatch ? dotMatch[0].trim() : "";
+  let sqlQueries = [];
+
+  if (sqlArrayMatch) {
+    try {
+      const parsedArr = JSON.parse(sqlArrayMatch[0]);
+      if (Array.isArray(parsedArr)) {
+        sqlQueries = parsedArr
+          .filter((q) => typeof q === "string" && q.trim())
+          .map((q) => (q.trim().endsWith(";") ? q.trim() : `${q.trim()};`));
+      }
+    } catch {
+      // Could not extract SQL array
+    }
   }
 
-  return sqlQueries;
+  if (!dotCode) {
+    throw new CustomError(502, "Failed to generate ER diagram. The AI did not return valid DOT code.");
+  }
+
+  return { dotCode, sqlQueries };
 };
 
-// Load prompts
+// Load prompts — only 2 prompts needed now (reasoning + combined DOT/SQL)
 const reasoningPromptPath = path.join(__dirname, "../../../prompts/er/ER_REASONING.txt");
 const vizPromptPath = path.join(__dirname, "../../../prompts/er/ER.txt");
-const sqlPromptPath = path.join(__dirname, "../../../prompts/er/ER_SQL.txt");
 const reasoningPrompt = fs.readFileSync(reasoningPromptPath, "utf-8");
 const vizPrompt = fs.readFileSync(vizPromptPath, "utf-8");
-const sqlPrompt = fs.readFileSync(sqlPromptPath, "utf-8");
 
 const erDiagramGenerator = handleAsync(async (req, res, next) => {
   const { query, model, sqlDialect } = req.body;
@@ -98,41 +131,28 @@ const erDiagramGenerator = handleAsync(async (req, res, next) => {
 
   const erReasoning = reasoningResponse.text;
 
-  // Stage 2: DOT code generation — convert reasoning into Viz.js renderable DOT code
+  // Stage 2: Combined DOT + SQL generation — single call produces both outputs
+  const targetDialect = normalizeSqlDialect(sqlDialect);
+  const dialectInstruction = targetDialect !== "MySQL"
+    ? `\n\nIMPORTANT: Use ${targetDialect} SQL dialect for all CREATE TABLE statements.\n\n`
+    : "\n\n";
+
   const vizResponse = await userClient.models.generateContent({
     model: targetModel,
     contents: [
       {
         role: "user",
-        parts: [{ text: `${vizPrompt}\n\n${erReasoning}` }],
+        parts: [{ text: `${vizPrompt}${dialectInstruction}${erReasoning}` }],
       },
     ],
   });
 
-  const rawVizCode = stripMarkdownFences(vizResponse.text);
-
-  // Stage 3: SQL generation — convert ER reasoning into executable CREATE TABLE statements
-  const targetDialect = normalizeSqlDialect(sqlDialect);
-  const sqlResponse = await userClient.models.generateContent({
-    model: targetModel,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `${sqlPrompt}\n\nSQL Dialect: ${targetDialect}\n\n${erReasoning}`,
-          },
-        ],
-      },
-    ],
-  });
-
-  const sqlQueries = sanitizeSqlQueriesOutput(sqlResponse.text);
+  const { dotCode, sqlQueries } = parseCombinedOutput(vizResponse.text);
 
   res.status(200).json({
     status: "success",
     data: {
-      vizCode: rawVizCode,
+      vizCode: dotCode,
       sqlQueries,
     },
   });
